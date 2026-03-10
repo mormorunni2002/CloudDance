@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="CloudDance participation revenue calculator for retained risk, ceded risk, cell revenue, and cell profit."
+    />
+    <title>CloudDance Revenue Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="calculator-shell">
+      <section class="calculator-card" aria-labelledby="calculator-title">
+        <div class="eyebrow">CloudDance calculator</div>
+        <h1 id="calculator-title">See your participation grow</h1>
+        <p class="subhead">
+          Keep the Traditional Placement → Full Participation view, then layer in
+          premium and loss ratio to estimate cell revenue and cell profit.
+        </p>
+
+        <div class="slider-panel">
+          <div class="slider-heading-row">
+            <span class="slider-end">Traditional Placement</span>
+            <output id="participationValue" class="participation-pill" for="participationRange">50%</output>
+            <span class="slider-end slider-end-right">Full Participation</span>
+          </div>
+
+          <label class="sr-only" for="participationRange">Participation percentage</label>
+          <input
+            id="participationRange"
+            name="participationRange"
+            type="range"
+            min="0"
+            max="100"
+            value="50"
+            step="1"
+          />
+
+          <div class="slider-scale" aria-hidden="true">
+            <span>0%</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <div class="metric-grid metric-grid-top" aria-live="polite">
+          <article class="metric-card">
+            <span class="metric-label">Risk retained</span>
+            <strong id="riskRetained">50%</strong>
+            <span class="metric-detail" id="retainedPremium">Retained premium: $0</span>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Risk ceded</span>
+            <strong id="riskCeded">50%</strong>
+            <span class="metric-detail" id="cededPremium">Ceded premium: $0</span>
+          </article>
+        </div>
+
+        <div class="input-grid">
+          <label class="input-card" for="premiumPlaced">
+            <span class="input-label">Amount of premium placed in cell</span>
+            <div class="input-field currency-field">
+              <span class="input-prefix" aria-hidden="true">$</span>
+              <input
+                id="premiumPlaced"
+                name="premiumPlaced"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="1000"
+                value="1000000"
+                placeholder="1000000"
+              />
+            </div>
+            <span class="input-help">Annual premium volume entered into the cell.</span>
+          </label>
+
+          <label class="input-card" for="lossRatio">
+            <span class="input-label">Cell loss ratio</span>
+            <div class="input-field percent-field">
+              <input
+                id="lossRatio"
+                name="lossRatio"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.1"
+                value="60"
+                placeholder="60"
+              />
+              <span class="input-suffix" aria-hidden="true">%</span>
+            </div>
+            <span class="input-help">Expected loss ratio for the participating cell. This can exceed 100% in adverse years.</span>
+          </label>
+        </div>
+
+        <div class="metric-grid metric-grid-bottom" aria-live="polite">
+          <article class="metric-card metric-card-accent">
+            <span class="metric-label">Cell revenue</span>
+            <strong id="cellRevenue">$500,000</strong>
+            <span class="metric-detail">Based on retained participation</span>
+          </article>
+
+          <article class="metric-card metric-card-success">
+            <span class="metric-label">Cell profit</span>
+            <strong id="cellProfit">$200,000</strong>
+            <span class="metric-detail" id="expectedLosses">Expected losses: $300,000</span>
+          </article>
+        </div>
+
+        <p class="summary" id="summaryText" aria-live="polite"></p>
+
+        <p class="assumption-note">
+          Formula used here:
+          <code>cell revenue = premium placed × retained risk</code>
+          and
+          <code>cell profit = cell revenue − expected losses</code>, where
+          <code>expected losses = cell revenue × loss ratio</code>.
+          If your economics differ, update the formula block in <code>script.js</code>.
+        </p>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
