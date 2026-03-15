@@ -7,7 +7,7 @@
       name="description"
       content="CloudDance participation revenue calculator for retained risk, ceded risk, cell revenue, and cell profit."
     />
-    <title>CloudDance Revenue Calculator</title>
+    <title>CloudDance Cell Revenue Calculator</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -16,8 +16,7 @@
         <div class="eyebrow">CloudDance calculator</div>
         <h1 id="calculator-title">See your participation grow</h1>
         <p class="subhead">
-          Keep the Traditional Placement → Full Participation view, then layer in
-          premium and loss ratio to estimate cell revenue and cell profit.
+          Layer in expected risk participation, premium, and loss ratio to estimate cell revenue and cell profit.
         </p>
 
         <div class="slider-panel">
@@ -111,14 +110,7 @@
         </div>
 
         <p class="summary" id="summaryText" aria-live="polite"></p>
-
-        <p class="assumption-note">
-          Formula used here:
-          <code>cell revenue = premium placed × retained risk</code>
-          and
-          <code>cell profit = cell revenue − expected losses</code>, where
-          <code>expected losses = cell revenue × loss ratio</code>.
-          If your economics differ, update the formula block in <code>script.js</code>.
+        
         </p>
       </section>
     </main>
