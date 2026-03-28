@@ -1,0 +1,525 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SDR
+}
+
+enum LeadStatus {
+  UNWORKED
+  ATTEMPTED
+  CONNECTED
+  INTERESTED
+  FOLLOW_UP
+  CLOSED_WON
+  CLOSED_LOST
+  BAD_DATA
+}
+
+enum ActivityType {
+  LEAD_IMPORTED
+  LEAD_UPDATED
+  ASSIGNMENT_CHANGED
+  CONTACT_ADDED
+  NOTE_ADDED
+  CALL_LOGGED
+  TASK_CREATED
+  TASK_COMPLETED
+  FOLLOW_UP_CREATED
+  FOLLOW_UP_COMPLETED
+  TAGS_UPDATED
+  EMAIL_SENT
+  EMAIL_SYNCED
+}
+
+enum TaskStatus {
+  OPEN
+  COMPLETED
+  CANCELED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum CallDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum EmailProvider {
+  GMAIL
+  MICROSOFT
+  PLACEHOLDER
+}
+
+enum OAuthProvider {
+  GOOGLE
+  MICROSOFT
+  CLOUDTALK
+}
+
+enum OAuthStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+}
+
+enum SyncStatus {
+  IDLE
+  SYNCING
+  NEEDS_AUTH
+  ERROR
+}
+
+enum ImportStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum ImportFileType {
+  BROKER_LEADS
+  SEARCH_SUMMARY
+  UNKNOWN
+}
+
+model User {
+  id                  String            @id @default(cuid())
+  name                String?
+  email               String            @unique
+  emailVerified       DateTime?
+  image               String?
+  passwordHash        String?
+  role                Role              @default(SDR)
+  isActive            Boolean           @default(true)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  accounts            Account[]
+  sessions            Session[]
+  activities          Activity[]        @relation("ActivityUser")
+  leadAssignments     LeadAssignment[]  @relation("AssignedUser")
+  assignmentsCreated  LeadAssignment[]  @relation("AssignedByUser")
+  calls               Call[]
+  notes               Note[]
+  tasks               Task[]            @relation("TaskOwner")
+  followUps           FollowUp[]        @relation("FollowUpOwner")
+  emailAccounts       EmailAccount[]
+  oauthConnections    OAuthConnection[]
+  importJobs          ImportJob[]
+}
+
+model Lead {
+  id                         String             @id @default(cuid())
+  brokerageName              String
+  normalizedBrokerageName    String
+  tradeDescription           String?
+  lineOfBusiness             String?
+  website                    String?
+  normalizedWebsite          String?
+  domain                     String?
+  phone                      String?
+  normalizedPhone            String?
+  mobile                     String?
+  normalizedMobile           String?
+  city                       String?
+  state                      String?
+  address                    String?
+  normalizedMailingAddress   String?
+  npnLicenseInfo             String?
+  agencySize                 String?
+  carrierAppointments        String?
+  specialtyNiche             String?
+  linkedinCompanyProfile     String?
+  officeSize                 String?
+  employeeCount              Int?
+  producerNames              String?
+  emailVerificationNotes     String?
+  notesSummary               String?
+  hasPhone                   Boolean            @default(false)
+  status                     LeadStatus         @default(UNWORKED)
+  lastContactedAt            DateTime?
+  rawMetadata                Json?
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  contacts                   Contact[]
+  assignments                LeadAssignment[]
+  activities                 Activity[]
+  calls                      Call[]
+  notes                      Note[]
+  tasks                      Task[]
+  followUps                  FollowUp[]
+  tags                       LeadTag[]
+  emailThreads               EmailThread[]
+  emailMessages              EmailMessage[]
+  importRows                 ImportRow[]
+
+  @@index([brokerageName])
+  @@index([normalizedBrokerageName])
+  @@index([lineOfBusiness])
+  @@index([agencySize])
+  @@index([state])
+  @@index([hasPhone])
+  @@index([status])
+  @@index([lastContactedAt])
+  @@index([domain])
+  @@index([normalizedPhone])
+  @@index([normalizedWebsite])
+}
+
+model Contact {
+  id                String     @id @default(cuid())
+  leadId            String
+  lead              Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  firstName         String?
+  lastName          String?
+  fullName          String?
+  normalizedFullName String?
+  title             String?
+  phone             String?
+  normalizedPhone   String?
+  mobile            String?
+  normalizedMobile  String?
+  email             String?
+  normalizedEmail   String?
+  linkedinUrl       String?
+  emailVerified     Boolean?
+  isPrimary         Boolean    @default(false)
+  notes             String?
+  sourceRowNumber   Int?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  calls             Call[]
+  notesEntries      Note[]
+
+  @@index([leadId])
+  @@index([normalizedEmail])
+  @@index([normalizedFullName])
+  @@index([normalizedPhone])
+}
+
+model LeadAssignment {
+  id           String    @id @default(cuid())
+  leadId        String
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation("AssignedUser", fields: [userId], references: [id], onDelete: Cascade)
+  assignedById  String?
+  assignedBy    User?     @relation("AssignedByUser", fields: [assignedById], references: [id], onDelete: SetNull)
+  isCurrent     Boolean   @default(true)
+  notes         String?
+  assignedAt    DateTime  @default(now())
+  unassignedAt  DateTime?
+
+  @@index([leadId, isCurrent])
+  @@index([userId, isCurrent])
+}
+
+model Activity {
+  id         String       @id @default(cuid())
+  leadId      String
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?        @relation("ActivityUser", fields: [userId], references: [id], onDelete: SetNull)
+  type        ActivityType
+  summary     String
+  detail      Json?
+  createdAt   DateTime     @default(now())
+
+  @@index([leadId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Disposition {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  description String?
+  sortOrder   Int      @default(0)
+  isDefault   Boolean  @default(false)
+  calls       Call[]
+}
+
+model Call {
+  id              String        @id @default(cuid())
+  leadId          String
+  lead            Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contactId       String?
+  contact         Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  dispositionId   String?
+  disposition     Disposition?  @relation(fields: [dispositionId], references: [id], onDelete: SetNull)
+  direction       CallDirection @default(OUTBOUND)
+  phoneNumber     String
+  normalizedPhone String?
+  startedAt       DateTime      @default(now())
+  endedAt         DateTime?
+  durationSeconds Int?
+  notes           String?
+  cloudTalkCallId String?
+  providerStatus  String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  recordings      Recording[]
+
+  @@index([leadId, startedAt])
+  @@index([userId, startedAt])
+}
+
+model Recording {
+  id              String   @id @default(cuid())
+  callId          String
+  call            Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  provider        String?
+  externalId      String?
+  url             String
+  durationSeconds Int?
+  createdAt       DateTime @default(now())
+}
+
+model Note {
+  id         String    @id @default(cuid())
+  leadId      String
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body        String
+  createdAt   DateTime  @default(now())
+
+  @@index([leadId, createdAt])
+}
+
+model Task {
+  id           String      @id @default(cuid())
+  leadId        String
+  lead          Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?       @relation("TaskOwner", fields: [userId], references: [id], onDelete: SetNull)
+  title         String
+  description   String?
+  dueAt         DateTime?
+  status        TaskStatus  @default(OPEN)
+  priority      Priority    @default(MEDIUM)
+  completedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([leadId, dueAt])
+  @@index([userId, status])
+}
+
+model FollowUp {
+  id          String    @id @default(cuid())
+  leadId       String
+  lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?     @relation("FollowUpOwner", fields: [userId], references: [id], onDelete: SetNull)
+  dueAt        DateTime
+  note         String?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([leadId, dueAt])
+  @@index([userId, dueAt])
+}
+
+model Tag {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  color       String?
+  createdAt   DateTime  @default(now())
+  leads       LeadTag[]
+}
+
+model LeadTag {
+  leadId      String
+  tagId       String
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@id([leadId, tagId])
+  @@index([tagId])
+}
+
+model ImportJob {
+  id                String         @id @default(cuid())
+  filename          String
+  sourceHash        String?
+  fileType          ImportFileType @default(UNKNOWN)
+  status            ImportStatus   @default(PENDING)
+  encoding          String?
+  totalRows         Int            @default(0)
+  processedRows     Int            @default(0)
+  leadRows          Int            @default(0)
+  continuationRows  Int            @default(0)
+  leadsCreated      Int            @default(0)
+  leadsUpdated      Int            @default(0)
+  contactsCreated   Int            @default(0)
+  contactsUpdated   Int            @default(0)
+  errorsCount       Int            @default(0)
+  skippedRows       Int            @default(0)
+  summary           String?
+  errorLog          String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdById       String?
+  createdBy         User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  rows              ImportRow[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model ImportRow {
+  id                String    @id @default(cuid())
+  jobId             String
+  job               ImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  leadId            String?
+  lead              Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  rowNumber         Int
+  rowType           String?
+  brokerageNameRaw  String?
+  fingerprint       String?
+  status            String
+  message           String?
+  payload           Json
+  createdAt         DateTime  @default(now())
+
+  @@index([jobId, rowNumber])
+  @@index([leadId])
+}
+
+model OAuthConnection {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       OAuthProvider
+  status         OAuthStatus   @default(DISCONNECTED)
+  emailAddress   String?
+  accessToken    String?
+  refreshToken   String?
+  scope          String?
+  expiresAt      DateTime?
+  meta           Json?
+  emailAccounts  EmailAccount[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([userId, provider])
+}
+
+model EmailAccount {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          EmailProvider
+  emailAddress      String
+  displayName       String?
+  isPrimary         Boolean       @default(false)
+  syncStatus        SyncStatus    @default(IDLE)
+  lastSyncedAt      DateTime?
+  oauthConnectionId String?
+  oauthConnection   OAuthConnection? @relation(fields: [oauthConnectionId], references: [id], onDelete: SetNull)
+  threads           EmailThread[]
+  sentMessages      EmailMessage[] @relation("SenderAccount")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([provider, emailAddress])
+  @@index([userId, provider])
+}
+
+model EmailThread {
+  id               String        @id @default(cuid())
+  emailAccountId   String
+  emailAccount     EmailAccount  @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
+  leadId           String?
+  lead             Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  provider         EmailProvider
+  providerThreadId String?
+  subject          String
+  snippet          String?
+  lastMessageAt    DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  messages         EmailMessage[]
+
+  @@index([leadId, lastMessageAt])
+  @@index([emailAccountId, lastMessageAt])
+}
+
+model EmailMessage {
+  id                String        @id @default(cuid())
+  threadId          String
+  thread            EmailThread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  leadId            String?
+  lead              Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  emailAccountId    String?
+  senderAccount     EmailAccount? @relation("SenderAccount", fields: [emailAccountId], references: [id], onDelete: SetNull)
+  providerMessageId String?
+  direction         String
+  fromAddress       String
+  toAddresses       String[]
+  ccAddresses       String[]
+  bccAddresses      String[]
+  subject           String
+  bodyText          String?
+  bodyHtml          String?
+  sentAt            DateTime      @default(now())
+  syncedAt          DateTime?
+  providerStatus    String?
+  createdAt         DateTime      @default(now())
+
+  @@index([threadId, sentAt])
+  @@index([leadId, sentAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

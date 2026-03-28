@@ -1,0 +1,10 @@
+node_modules
+.next
+.env
+.env.local
+.env.production
+dist
+coverage
+*.log
+postgres_data
+tmp

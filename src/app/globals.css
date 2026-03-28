@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+input,
+select,
+textarea {
+  @apply rounded-lg border border-border bg-white px-3 py-2 text-sm text-ink shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15;
+}
+
+label {
+  @apply text-sm font-medium text-ink;
+}
+
+button {
+  @apply transition;
+}
+
+a {
+  @apply transition;
+}
+
+.card {
+  @apply rounded-2xl border border-border bg-white shadow-panel;
+}
+
+.card-title {
+  @apply text-lg font-semibold text-ink;
+}
+
+.card-subtitle {
+  @apply text-sm text-muted;
+}
+
+.table-shell {
+  @apply overflow-hidden rounded-2xl border border-border bg-white shadow-panel;
+}
+
+.data-table {
+  @apply min-w-full divide-y divide-border text-sm;
+}
+
+.data-table th {
+  @apply bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted;
+}
+
+.data-table td {
+  @apply px-4 py-3 align-top text-sm text-ink;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium;
+}
+
+.button-primary {
+  @apply inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark;
+}
+
+.button-secondary {
+  @apply inline-flex items-center justify-center rounded-lg border border-border bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-slate-50;
+}
+
+.button-danger {
+  @apply inline-flex items-center justify-center rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white hover:bg-red-700;
+}
+
+.form-grid {
+  @apply grid gap-4 md:grid-cols-2;
+}
+
+.section-grid {
+  @apply grid gap-6 xl:grid-cols-[minmax(0,2fr),minmax(320px,1fr)];
+}
+
+.sidebar-card {
+  @apply card sticky top-6 p-5;
+}

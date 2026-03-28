@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: clouddance-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: clouddance
+      POSTGRES_USER: clouddance
+      POSTGRES_PASSWORD: clouddance
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clouddance-app
+    depends_on:
+      - db
+    working_dir: /app
+    command: sh -c "npm install && npm run db:generate && npm run db:push && npm run db:seed && npm run dev"
+    environment:
+      DATABASE_URL: postgresql://clouddance:clouddance@db:5432/clouddance?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-replace-me-with-a-real-secret}
+      AUTH_TRUST_HOST: "true"
+      AUTH_URL: http://localhost:3000
+      APP_URL: http://localhost:3000
+      SEED_ADMIN_EMAIL: alex@clouddance.insure
+      SEED_ADMIN_PASSWORD: ChangeMe-Admin123!
+      SEED_SDR_EMAIL: partnerships@clouddance.insure
+      SEED_SDR_PASSWORD: ChangeMe-SDR123!
+      CLOUDTALK_CLICK_TO_CALL_URL_TEMPLATE: tel:{phone}
+      CLOUDTALK_API_BASE_URL: https://api.cloudtalk.io
+      CLOUDTALK_API_KEY: placeholder-cloudtalk-key
+      GOOGLE_CLIENT_ID: placeholder-google-client-id
+      GOOGLE_CLIENT_SECRET: placeholder-google-client-secret
+      MICROSOFT_CLIENT_ID: placeholder-microsoft-client-id
+      MICROSOFT_CLIENT_SECRET: placeholder-microsoft-client-secret
+      EMAIL_SYNC_MODE: placeholder
+      IMPORT_BATCH_SIZE: "500"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+      - app_tmp:/app/tmp
+
+volumes:
+  postgres_data:
+  app_node_modules:
+  app_tmp:
