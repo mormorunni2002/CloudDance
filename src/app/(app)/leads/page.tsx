@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth-helpers";
-import { getFilterOptions, getLeadsPage } from "@/lib/lead-queries";
+import { getFilterOptions, getLeadsPage, getAssignableUsers } from "@/lib/lead-queries";
+import { InlineAssignSelect } from "@/components/inline-assign-select";
 import { PageHeader } from "@/components/page-header";
 import { LeadStatusBadge } from "@/components/lead-status-badge";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -22,9 +23,14 @@ export default async function LeadsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  await requireSession();
+  const session = await requireSession();
+  const isAdmin = session.user.role === "ADMIN";
   const resolved = searchParams;
-  const [filters, results] = await Promise.all([getFilterOptions(), getLeadsPage(resolved)]);
+  const [filters, results, users] = await Promise.all([
+    getFilterOptions(),
+    getLeadsPage(resolved),
+    isAdmin ? getAssignableUsers() : Promise.resolve([]),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -129,7 +135,17 @@ export default async function LeadsPage({
                     <td>
                       <LeadStatusBadge status={lead.status} />
                     </td>
-                    <td>{assignee?.name || assignee?.email || "Unassigned"}</td>
+                    <td>
+                      {isAdmin ? (
+                        <InlineAssignSelect
+                          leadId={lead.id}
+                          currentUserId={assignee?.id ?? null}
+                          users={users}
+                        />
+                      ) : (
+                        assignee?.name || assignee?.email || "Unassigned"
+                      )}
+                    </td>
                     <td>
                       {primaryContact ? (
                         <>
